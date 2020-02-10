@@ -1,7 +1,7 @@
 from flask import Flask, escape, request, jsonify, make_response
 import sqlite3
 from flask import g
-from flask_httpauth import HTTPBasicAuth
+
 
 
 app = Flask(__name__)
