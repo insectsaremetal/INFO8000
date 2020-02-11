@@ -1,3 +1,5 @@
+# I could not get the below code to work, so I reverted to doing a web API via local host. This is in files labeled Attempt 2.
+
 from flask import Flask, escape, request, jsonify, make_response
 import sqlite3
 from flask import g
