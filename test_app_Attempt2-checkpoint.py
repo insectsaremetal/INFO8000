@@ -1,5 +1,5 @@
 # Example of a web api using a local host. 
-# Must create the datebase using the file called 
+# Must create the datebase using the file called Create_BooksDB_Attempt2
 # To utilize this you have use the following in python command prompt altering the location based on your computer: (base) C:\Users\student2\projects\api> python test_app_final.py
 
 import flask
@@ -18,7 +18,7 @@ def dict_factory(cursor, row):
 
 @app.route('/', methods=['GET'])
 def home():
-    return '''<h1> Book Archive</h1>
+    return '''<h1> Books </h1>
 <p> API for my book collection.</p>'''
 
 
