@@ -4,6 +4,7 @@
 
 # I could not get my code to work using the method of Google Cloud. When I initially created an account it kept reverting back to
 # an individual that I do not know and contained their information, so I don't know what is going on.
+# My initial attempt using Google Cloud is in the INFO8000 git repo though. 
 
 import flask
 from flask import request, jsonify
@@ -77,9 +78,10 @@ def api_filter():
 
 app.run()
 
-
 # To pull all movies: http://127.0.0.1:5000/api/movies/all
 
 # To pull a specific theater: http://127.0.0.1:5000/api/movies?theatername=Rockstop
 
 # To pull a specific age: http://127.0.0.1:5000/api/movies?age=22
+
+# To get to the homepage: http://127.0.0.1:5000/api/movies
