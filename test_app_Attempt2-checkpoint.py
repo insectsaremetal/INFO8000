@@ -1,6 +1,9 @@
 # Example of a web api using a local host. 
 # Must create the datebase using the file called Create_BooksDB_Attempt2
 # To utilize this you have use the following in python command prompt altering the location based on your computer: (base) C:\Users\student2\projects\api> python test_app_final.py
+# Based off of a tutorial: https://programminghistorian.org/en/lessons/creating-apis-with-python-and-flask 
+# But with data I created
+
 
 import flask
 from flask import request, jsonify
