@@ -1,5 +1,9 @@
-# Example of a web api using a local host. The 
-# To utilize this you have use the following in python command prompt altering the location based on your computer: (base) C:\Users\student2\projects\api> python API_APP_Attempt3.py
+# Example of a web api using a local host. 
+# To utilize this you have use the following in python command prompt altering the location based on your computer: 
+# (base) C:\Users\student2\projects\api> python API_APP_Attempt3.py
+
+# I could not get my code to work using the method of Google Cloud. When I initially created an account it kept reverting back to
+# an individual that I do not know and contained their information, so I don't know what is going on.
 
 import flask
 from flask import request, jsonify
