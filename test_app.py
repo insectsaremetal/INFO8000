@@ -1,4 +1,7 @@
-# I could not get the below code to work, so I reverted to doing a web API via local host. This is in files labeled Attempt 2.
+# I could not get the below code to work. 
+# I attempted a tutorial I found online, but I created my own database.  This is in files labeled Attempt 2.
+# I was going to build on this and create a new one using my entertainment industry data, but realized ...
+# This was via a local host and is only assessible when the connection is open. 
 
 from flask import Flask, escape, request, jsonify, make_response
 import sqlite3
