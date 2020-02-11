@@ -1,4 +1,5 @@
-# Example of a web api using a local host. The 
+# Example of a web api using a local host. 
+# Must create the datebase using the file called 
 # To utilize this you have use the following in python command prompt altering the location based on your computer: (base) C:\Users\student2\projects\api> python test_app_final.py
 
 import flask
