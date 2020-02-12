@@ -7,11 +7,18 @@
 # My initial attempt using Google Cloud is in the INFO8000 git repo though. 
 
 import flask
-from flask import request, jsonify, session, redirect, url_for, escape
+from flask import Flask, request, jsonify, session, redirect, url_for, escape, make_response
 import sqlite3
+from flask_httpauth import HTTPBasicAuth
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
+
+auth = HTTPBasicAuth()
+
+USER_DATA = {
+    "owner": "moviefun"
+}
 
 def dict_factory(cursor, row):
     d = {}
@@ -43,7 +50,7 @@ def page_not_found(e):
     return "<h1>404</h1><p>The resource could not be found. Try a different request</p>", 404
 
 
-@app.route('/api/movies', methods=['GET', 'POST'])
+@app.route('/api/movies', methods=['GET'])
     
 def api_filter():
     query_parameters = request.args
@@ -78,19 +85,29 @@ def api_filter():
 
     return jsonify(results)
 
-def login():
-    error = None
-    if request.method == 'POST':
-        if valid_login(request.form['username'],
-                       request.form['password']):
-            return log_the_user_in(request.form['username'])
-        else:
-            error = 'Invalid username/password'
-    # the code below is executed if the request method
-    # was GET or the credentials were invalid
-    return render_template('login.html', error=error)
+#def login():
+#    error = None
+#    if request.method == 'POST':
+#        if valid_login(request.form['username'],
+#                       request.form['password']):
+#            return log_the_user_in(request.form['username'])
+#        else:
+#            error = 'Invalid username/password'
+#    return render_template('login.html', error=error)
 
+@auth.verify_password
+def verify(username, password):
+    if not (username and password):
+        return False
+    return USER_DATA.get(username) == password
 
+@auth.login_required
+@app.route('/additions', methods=['PUT'])
+def addinfo():
+    additions = request.args.get("data")
+    all_movies.db.execute(add)
+    all_movies.db.commit(additions)
+    return "<p>The additions have been included. </p>"
 
 app.run()
 
