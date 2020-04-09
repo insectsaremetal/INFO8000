@@ -181,7 +181,7 @@ Outbreak17 <- as.data.frame(Outbreak17)
 Outbreak18 <- as.data.frame(Outbreak18)
 
 Outbreakdata <- rbind(Outbreak16, Outbreak17, Outbreak18)
-
+write.csv(Outbreakdata, "Outbreak_data.csv")
 
 
 ##########################
@@ -199,10 +199,29 @@ m_gam1  <- gam(Acres ~
                  s(Longitude, Latitude),
                family = nb(), data = Outbreakdata,
                method = "REML")
-summary(m_gam1)
-gam.check(m_gam1)
+saveRDS(m_gam1, "insect_predict.rds")
+
+
+#summary(m_gam1)
+#gam.check(m_gam1)
 
 
 
+## Test prediction 
+Fakedata <- data.frame(Latitude = 32.95954, Longitude = -85.45714)
+daymet <- download_daymet(site = "mysite",
+                      lat = Fakedata$Latitude,
+                      lon = Fakedata$Longitude,
+                      start = 2018,
+                      end = 2019,
+                      internal = TRUE,
+                      simplify = F) # returns tidy data! 
+Fakedata$JANMINTEMP <- mean(daymet$data$tmin..deg.c.[366:396]) #2019
+Fakedata$FEBMINTEMP <- mean(daymet$data$tmin..deg.c.[397:424]) #2019
+Fakedata$MARMINTEMP <- mean(daymet$data$tmin..deg.c.[425:455]) #2019
+Fakedata$Prcp <- sum(daymet$data$prcp..mm.day.[365:730]) #2019
+Fakedata$AUGMAXTEMP <- mean(daymet$data$tmax..deg.c.[213:243]) #2018!!
+
+pred.acres <- predict(m_gam1,Fakedata,type="response")
 
 
