@@ -1,5 +1,16 @@
 library(shiny)
 library(shinyjs)
+library(readr)
+library(knitr)
+library(daymetr)
+library(raster)
+library(lattice)
+library(latticeExtra)
+library(mgcv)
+library(RCurl)
+library(rgdal)
+library(usmap)
+library(ggplot2)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path)) #set directory to file location
 m_gam1 <<- readRDS("insect_predict.rds")
 #Fakedata <<- data.frame(Longitude = -85.45714, Latitude = 32.95954) #until new values are put in
@@ -28,11 +39,12 @@ ui <<- fluidPage(
            numericInput("lon", "Longitude (DD)", value = -85.45714)),
     column(width = 2,
            actionButton("coords", "Predict"))),
-    
+
   fluidRow(
   column(width = 4, fileInput("file", h3("Add Outbreak Data (requires log in)"), 
            accept=c('text/csv', 'text/comma-separated-values,text/plain'))),
-  column(width = 3, textOutput("uploaded"))),
+  column(width = 3, textOutput("uploaded")),
+  column(width = 3, textOutput("runmodel"))),
   
   fluidRow(
     column(width = 2,
@@ -40,6 +52,8 @@ ui <<- fluidPage(
     column(width = 2,
            passwordInput("PW", "Password", value = "password")),
     column(width = 2,
-           actionButton("button", "Upload")))
-    
+           actionButton("button", "Upload")),
+  column(width = 2,
+         actionButton("optimize", "Re-Run Model")),
+  tags$p("(this may take a few minutes)"))
 )

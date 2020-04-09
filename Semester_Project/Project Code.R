@@ -225,3 +225,5 @@ Fakedata$AUGMAXTEMP <- mean(daymet$data$tmax..deg.c.[213:243]) #2018!!
 pred.acres <- predict(m_gam1,Fakedata,type="response")
 
 
+
+
