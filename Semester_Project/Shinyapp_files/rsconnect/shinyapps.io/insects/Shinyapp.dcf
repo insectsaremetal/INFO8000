@@ -5,8 +5,9 @@ account: insects
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2090508
-bundleId: 2993709
+bundleId: 3032451
 url: https://insects.shinyapps.io/Shinyapp/
-when: 1586463062.53777
+when: 1587249241.93456
 asMultiple: FALSE
 asStatic: FALSE
+ignoredFiles: ghcnd-stations.csv|ghcnd-stations.txt

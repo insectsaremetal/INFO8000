@@ -20,7 +20,7 @@ server <- function(input, output, session) {
                include = c(.south_region), exclude= c("Texas", "Oklahoma"))+ 
     geom_point(data = Outbreakdata3, aes(x = Longitude.1, y= Latitude.1, col = Year))+
       scale_color_discrete(drop=FALSE)+
-      geom_point(data = Fakedata2, aes(x = Longitude.1, y = Latitude.1), pch = 4, size =3)
+      geom_point(data = Fakedata2, aes(x = Longitude.1, y = Latitude.1), pch = 4, size =4)
     
     G1
   })
@@ -35,9 +35,9 @@ server <- function(input, output, session) {
                               end = input$predyear,
                               internal = TRUE,
                               simplify = F) # returns tidy data! 
-    Fakedata$JANMINTEMP <- mean(daymet$data$tmin..deg.c.[366:396]) #2019
-    Fakedata$FEBMINTEMP <- mean(daymet$data$tmin..deg.c.[397:424]) #2019
-    Fakedata$MARMINTEMP <- mean(daymet$data$tmin..deg.c.[425:455]) #2019
+    Fakedata$JANMAXTEMP <- mean(daymet$data$tmax..deg.c.[366:396]) #2019
+    Fakedata$FEBMAXTEMP <- mean(daymet$data$tmax..deg.c.[397:424]) #2019
+    Fakedata$MARMAXTEMP <- mean(daymet$data$tmax..deg.c.[425:455]) #2019
     Fakedata$Prcp <- sum(daymet$data$prcp..mm.day.[365:730]) #2019
     Fakedata$AUGMAXTEMP <- mean(daymet$data$tmax..deg.c.[213:243]) #2018!!
     }
@@ -45,23 +45,23 @@ server <- function(input, output, session) {
 if(input$predyear == 2020){
       predme <- Fakedata
       coordinates(predme) <- ~Longitude+Latitude
-      Jan <<- raster("2020_Jan_min.grd")
-      Feb <<- raster("2020_Feb_min.grd")
-      March <<- raster("2020_March_min.grd")
+      Jan <<- raster("2020_Jan_max.grd")
+      Feb <<- raster("2020_Feb_max.grd")
+      March <<- raster("2020_March_max.grd")
       Aug <<- raster("2019_August_max.grd")
       Precip <<- raster("2019_ppt.grd")
       
-      Fakedata$JANMINTEMP <- extract(Jan, predme)
-      Fakedata$FEBMINTEMP <- extract(Feb, predme)
-      Fakedata$MARMINTEMP <- extract(March, predme)
+      Fakedata$JANMAXTEMP <- extract(Jan, predme)
+      Fakedata$FEBMAXTEMP <- extract(Feb, predme)
+      Fakedata$MARMAXTEMP <- extract(March, predme)
       Fakedata$Prcp <- extract(Precip, predme)
       Fakedata$AUGMAXTEMP <- extract(Aug, predme)
     }
     
     m_gam1 <<- readRDS("insect_predict.rds")
     preds <- predict(m_gam1,Fakedata,type="response", se.fit = T)
-    output$predicted <- renderText({paste("Current Model Predicts a ", round(preds$fit, 2), "Acre Outbreak in", Fakedata$Year, "with SE = ", round(preds$se.fit,2)) })
-    output$predictors <- renderText({paste("Predictions based on January min temp of", round(Fakedata$JANMINTEMP, digits = 0), "\u00B0C, February min temp of", round(Fakedata$FEBMINTEMP, digits = 0), "\u00B0C, March min temp of  ", round(Fakedata$MARMINTEMP, digits = 0), "\u00B0C, August max temperature of ", round(Fakedata$AUGMAXTEMP, digits = 0), "\u00B0C, and annual precipitation of", round(Fakedata$Prcp, digits =2), "mm")})
+    output$predicted <- renderText({paste("For coordinates (", Fakedata$Longitude, ", ", Fakedata$Latitude, ")  the current model predicts a ", round(preds$fit, 2), " Acre Outbreak in ", Fakedata$Year, " with SE = ", round(preds$se.fit,2), sep = "") })
+    output$predictors <- renderText({paste("Predictions based on January max temp of", round(Fakedata$JANMAXTEMP, digits = 0), "\u00B0C, February max temp of", round(Fakedata$FEBMAXTEMP, digits = 0), "\u00B0C, March max temp of  ", round(Fakedata$MARMAXTEMP, digits = 0), "\u00B0C, August ", Fakedata$Year- 1, " max temperature of ", round(Fakedata$AUGMAXTEMP, digits = 0), "\u00B0C, and annual precipitation of", round(Fakedata$Prcp, digits =2), "mm")})
   })
 
   
@@ -82,9 +82,9 @@ if(input$predyear == 2020){
                               end = newdat$Year[i],
                               internal = TRUE,
                               simplify = F) # returns tidy data! 
-    newdat$JANMINTEMP[i] <- mean(daymet$data$tmin..deg.c.[366:396]) #my year
-    newdat$FEBMINTEMP[i] <- mean(daymet$data$tmin..deg.c.[397:424]) #my year
-    newdat$MARMINTEMP[i] <- mean(daymet$data$tmin..deg.c.[425:455]) #my year
+    newdat$JANMAXTEMP[i] <- mean(daymet$data$tmax..deg.c.[366:396]) #my year
+    newdat$FEBMAXTEMP[i] <- mean(daymet$data$tmax..deg.c.[397:424]) #my year
+    newdat$MARMAXTEMP[i] <- mean(daymet$data$tmax..deg.c.[425:455]) #my year
     newdat$Prcp[i] <- sum(daymet$data$prcp..mm.day.[365:730]) #my year 
     newdat$AUGMAXTEMP[i] <- mean(daymet$data$tmax..deg.c.[213:243]) #year BEFORE 
     } 
@@ -93,11 +93,14 @@ if(input$predyear == 2020){
     
     alldata <-merge(newdat, Outbreakdata, all = T) #combine with previous data
     write.csv(alldata, "Outbreak_data.csv") #write to file
-    m_gam  <- gam(Acres ~ 
-                     s(AUGMAXTEMP) + s(Prcp) +
-                     s(JANMINTEMP,FEBMINTEMP,MARMINTEMP) +
+    m_gam  <- gam((Acres^(1/3)) ~ 
+                     s(AUGMAXTEMP) + 
+                     s(Prcp) +
+                     s(FEBMAXTEMP) + 
+                     s(JANMAXTEMP,FEBMAXTEMP,MARMAXTEMP) +
                      s(Longitude, Latitude),
-                   family = nb(), data = alldata,
+                   family = gaussian(), 
+                   data = alldata,
                    method = "REML") #re-fit model
     saveRDS(m_gam, "insect_predict.rds") #save it as new working model
     output$runmodel <- renderText({"Model Re-Optimized!"})

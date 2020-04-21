@@ -37,17 +37,23 @@ ui <<- fluidPage(
   
   fluidRow(
     column(width = 2,
-           numericInput("lat", "Latitude (DD)", value = 31.95954, min = 25, max = 39, step = .20000)),
+           numericInput("lat", "Latitude (DD)", value = 31.95954, min = 25, max = 39, step = .20000), tags$div(tags$p("Please enter a latitude between 25 and 39"))),
     column(width = 2,
-           numericInput("lon", "Longitude (DD)", value = -85.45714, min = -95, max = -76, step = .20000)),
+           numericInput("lon", "Longitude (DD)", value = -85.45714, min = -95, max = -76, step = .20000), tags$div(tags$p("Please enter a longitude between -95 and -76"))),
     column(width = 2,
-           numericInput("predyear", "Year (1990 - 2020)", value = 2020, min = 1990, max= 2020)),
+           numericInput("predyear", "Year", value = 2020, min = 1990, max= 2020), tags$div(tags$p("Please enter a Year between 1990 and 2020"))),
     column(width = 2,
-           actionButton("coords", "Predict"))),
-
+           actionButton("coords", "Predict"), 
+           tags$div(tags$p("Hit this button to calculate the predicted outbreak acreage")))),
+  
   fluidRow(
   column(width = 4, fileInput("file", h3("Add Outbreak Data (requires log in)"), 
            accept=c('text/csv', 'text/comma-separated-values,text/plain'))),
+  tags$div(
+    tags$p(" "),
+    tags$p("Upload expects a csv file with a minimum of 3 columns:"),
+      tags$p("Latitude, Longitude and Year"),
+    tags$p("All other columns will be ignored")),
   column(width = 3, textOutput("uploaded")),
   column(width = 3, textOutput("runmodel"))),
   
@@ -60,5 +66,6 @@ ui <<- fluidPage(
            actionButton("button", "Upload")),
   column(width = 2,
          actionButton("optimize", "Re-Run Model")),
-  tags$p("(this may take a few minutes)"))
+  tags$div(
+    tags$p("Rerunning the model will use the newly uploaded data to fit a new GAM. This may take a few moments")))
 )
