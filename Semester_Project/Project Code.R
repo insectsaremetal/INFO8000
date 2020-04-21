@@ -226,7 +226,3 @@ Fakedata$Prcp <- sum(daymet$data$prcp..mm.day.[365:730]) #2019
 Fakedata$AUGMAXTEMP <- mean(daymet$data$tmax..deg.c.[213:243]) #2018!!
 
 pred.acres <- predict(m_gam1,Fakedata,type="response")
-
-
-
-
