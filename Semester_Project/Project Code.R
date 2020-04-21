@@ -193,11 +193,14 @@ write.csv(Outbreakdata, "Outbreak_data.csv")
 # Monthly maximum temps: Jan, Feb, Mar, Aug (prior year)
 # Prior year annual precipitation
 
-m_gam1  <- gam(Acres ~ 
-                 s(AUGMAXTEMP) + s(Prcp) +
-                 s(JANMINTEMP,FEBMINTEMP,MARMINTEMP) +
+m_gam1  <- gam((Acres^(1/3)) ~ 
+                 s(AUGMAXTEMP) + 
+                 s(Prcp) +
+                 s(FEBMAXTEMP) + 
+                 s(JANMAXTEMP,FEBMAXTEMP,MARMAXTEMP) +
                  s(Longitude, Latitude),
-               family = nb(), data = Outbreakdata,
+               family = gaussian(), 
+               data = Outbreakdata,
                method = "REML")
 saveRDS(m_gam1, "insect_predict.rds")
 
@@ -216,9 +219,9 @@ daymet <- download_daymet(site = "mysite",
                       end = 2019,
                       internal = TRUE,
                       simplify = F) # returns tidy data! 
-Fakedata$JANMINTEMP <- mean(daymet$data$tmin..deg.c.[366:396]) #2019
-Fakedata$FEBMINTEMP <- mean(daymet$data$tmin..deg.c.[397:424]) #2019
-Fakedata$MARMINTEMP <- mean(daymet$data$tmin..deg.c.[425:455]) #2019
+Fakedata$JANMAXTEMP <- mean(daymet$data$tmax..deg.c.[366:396]) #2019
+Fakedata$FEBMAXTEMP <- mean(daymet$data$tmax..deg.c.[397:424]) #2019
+Fakedata$MARMAXTEMP <- mean(daymet$data$tmax..deg.c.[425:455]) #2019
 Fakedata$Prcp <- sum(daymet$data$prcp..mm.day.[365:730]) #2019
 Fakedata$AUGMAXTEMP <- mean(daymet$data$tmax..deg.c.[213:243]) #2018!!
 
