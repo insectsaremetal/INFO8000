@@ -8,7 +8,7 @@ server <- function(input, output, session) {
   
   output$file <- renderPlot({
     Outbreakdata <<- read.csv("Outbreak_data.csv")
-    Outbreakdata2 <- usmap_transform(Outbreakdata[,c("Longitude", "Latitude", "Year")])
+    Outbreakdata2 <- usmap_transform(Outbreakdata[Outbreakdata$PRESENT == 1 ,c("Longitude", "Latitude", "Year")])
     Outbreakdata2$Year <- as.factor(Outbreakdata2$Year)
     Years <- switch(input$YearButton, "2016" = "2016", "2017" = "2017", 
                     "2018" = "2018", "All" = Outbreakdata2$Year)
@@ -35,11 +35,14 @@ server <- function(input, output, session) {
                               end = input$predyear,
                               internal = TRUE,
                               simplify = F) # returns tidy data! 
-    Fakedata$JANMAXTEMP <- mean(daymet$data$tmax..deg.c.[366:396]) #2019
-    Fakedata$FEBMAXTEMP <- mean(daymet$data$tmax..deg.c.[397:424]) #2019
-    Fakedata$MARMAXTEMP <- mean(daymet$data$tmax..deg.c.[425:455]) #2019
-    Fakedata$Prcp <- sum(daymet$data$prcp..mm.day.[365:730]) #2019
-    Fakedata$AUGMAXTEMP <- mean(daymet$data$tmax..deg.c.[213:243]) #2018!!
+    Fakedata$JANMAXTEMP <- mean(daymet$data$tmax..deg.c.[366:396]) 
+    Fakedata$FEBMAXTEMP <- mean(daymet$data$tmax..deg.c.[397:424])
+    Fakedata$MARMAXTEMP <- mean(daymet$data$tmax..deg.c.[425:455]) 
+    Fakedata$Prcp <- sum(daymet$data$prcp..mm.day.[365:730]) 
+    Fakedata$AUGMAXTEMP <- mean(daymet$data$tmax..deg.c.[213:243]) #year before!!
+    Fakedata$JANMINTEMP <- mean(daymet$data$tmin..deg.c.[366:396]) 
+    Fakedata$FEBMINTEMP <- mean(daymet$data$tmin..deg.c.[397:424]) 
+    Fakedata$MARMINTEMP <- mean(daymet$data$tmin..deg.c.[425:455]) 
     }
     
 if(input$predyear == 2020){
@@ -48,6 +51,9 @@ if(input$predyear == 2020){
       Jan <<- raster("2020_Jan_max.grd")
       Feb <<- raster("2020_Feb_max.grd")
       March <<- raster("2020_March_max.grd")
+      Jan.min <<- raster("2020_Jan_min.grd")
+      Feb.min <<- raster("2020_Feb_min.grd")
+      March.min <<- raster("2020_March_min.grd")
       Aug <<- raster("2019_August_max.grd")
       Precip <<- raster("2019_ppt.grd")
       
@@ -56,12 +62,21 @@ if(input$predyear == 2020){
       Fakedata$MARMAXTEMP <- extract(March, predme)
       Fakedata$Prcp <- extract(Precip, predme)
       Fakedata$AUGMAXTEMP <- extract(Aug, predme)
-    }
+      Fakedata$JANMINTEMP <- extract(Jan.min, predme)
+      Fakedata$FEBMINTEMP <- extract(Feb.min, predme)
+      Fakedata$MARMINTEMP <- extract(March.min, predme)
+}
+    temp.out <- Fakedata[,c("Longitude", "Latitude")]
+    coordinates(temp.out) <- ~Longitude+Latitude
+    proj4string(temp.out) <-CRS ("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0")
+    pts <- spTransform(temp.out,CRS("+proj=utm +zone=17 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"))
+    Fakedata$FOREST <- extract(forests, y = pts)
+    
     
     m_gam1 <<- readRDS("insect_predict.rds")
     preds <- predict(m_gam1,Fakedata,type="response", se.fit = T)
-    output$predicted <- renderText({paste("For coordinates (", Fakedata$Longitude, ", ", Fakedata$Latitude, ")  the current model predicts a ", round(preds$fit, 2), " Acre Outbreak in ", Fakedata$Year, " with SE = ", round(preds$se.fit,2), sep = "") })
-    output$predictors <- renderText({paste("Predictions based on January max temp of", round(Fakedata$JANMAXTEMP, digits = 0), "\u00B0C, February max temp of", round(Fakedata$FEBMAXTEMP, digits = 0), "\u00B0C, March max temp of  ", round(Fakedata$MARMAXTEMP, digits = 0), "\u00B0C, August ", Fakedata$Year- 1, " max temperature of ", round(Fakedata$AUGMAXTEMP, digits = 0), "\u00B0C, and annual precipitation of", round(Fakedata$Prcp, digits =2), "mm")})
+    output$predicted <- renderText({paste("For coordinates (", Fakedata$Longitude, ", ", Fakedata$Latitude, ")  the current model ", ifelse(round(preds$fit) >0, "predicts an outbreak in ", "does not predict an outbreak in "), Fakedata$Year, ". The current model is based off of data from ", min(Outbreakdata$Year), " to ", max(Outbreakdata$Year), sep = "") })
+    output$predictors <- renderText({paste("Predictions based on ",round(Fakedata$FOREST, digits = 2)*100, " percent forest cover at the chosen point, January max temp of", round(Fakedata$JANMAXTEMP, digits = 0), "\u00B0C, February max temp of", round(Fakedata$FEBMAXTEMP, digits = 0), "\u00B0C, March max temp of  ", round(Fakedata$MARMAXTEMP, digits = 0), "\u00B0C, August ", Fakedata$Year- 1, " max temperature of ", round(Fakedata$AUGMAXTEMP, digits = 0), "\u00B0C, and annual precipitation of", round(Fakedata$Prcp, digits =2), "mm.") })
   })
 
   
@@ -73,7 +88,8 @@ if(input$predyear == 2020){
          output$uploaded <- renderText({"Please log in and upload a .csv file to add data"})})
   
   observeEvent(input$optimize, {
-    if (!is.null(newdat)){
+    if (!exists("newdat")){output$runmodel <- renderText({"No new data was found. Please enter new data."})}
+    if (exists("newdat")){
     for (i in 1: nrow(newdat)){
     daymet <- download_daymet(site = "mysite",
                               lat = newdat$Latitude[i],
@@ -86,26 +102,35 @@ if(input$predyear == 2020){
     newdat$FEBMAXTEMP[i] <- mean(daymet$data$tmax..deg.c.[397:424]) #my year
     newdat$MARMAXTEMP[i] <- mean(daymet$data$tmax..deg.c.[425:455]) #my year
     newdat$Prcp[i] <- sum(daymet$data$prcp..mm.day.[365:730]) #my year 
-    newdat$AUGMAXTEMP[i] <- mean(daymet$data$tmax..deg.c.[213:243]) #year BEFORE 
+    newdat$AUGMAXTEMP[i] <- mean(daymet$data$tmax..deg.c.[213:243]) #year BEFORE
+    newdat$JANMINTEMP[i] <- mean(daymet$data$tmin..deg.c.[366:396]) 
+    newdat$FEBMINTEMP[i] <- mean(daymet$data$tmin..deg.c.[397:424]) 
+    newdat$MARMINTEMP[i] <- mean(daymet$data$tmin..deg.c.[425:455])
     } 
+      temp.out <- newdat[,c("Longitude", "Latitude")]
+      coordinates(temp.out) <- ~Longitude+Latitude
+      proj4string(temp.out) <-CRS ("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0")
+      pts <- spTransform(temp.out,CRS("+proj=utm +zone=17 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"))
+      newdat$FOREST <- extract(forests, y = pts)  
       
     #get all the variables for the new data
     
     alldata <-merge(newdat, Outbreakdata, all = T) #combine with previous data
     write.csv(alldata, "Outbreak_data.csv") #write to file
-    m_gam  <- gam((Acres^(1/3)) ~ 
-                     s(AUGMAXTEMP) + 
-                     s(Prcp) +
-                     s(FEBMAXTEMP) + 
-                     s(JANMAXTEMP,FEBMAXTEMP,MARMAXTEMP) +
-                     s(Longitude, Latitude),
-                   family = gaussian(), 
-                   data = alldata,
-                   method = "REML") #re-fit model
+    m_gam  <- gam(PRESENT ~ 
+                    s(AUGMAXTEMP) + 
+                    s(FEBMAXTEMP,JANMAXTEMP, MARMAXTEMP)+
+                    s(FEBMINTEMP,JANMINTEMP, MARMINTEMP)+
+                    s(Longitude, Latitude) + 
+                    s(FOREST)+
+                    s(Prcp),
+                  family = binomial(), 
+                  data = test,
+                  method = "REML") #re-fit model
     saveRDS(m_gam, "insect_predict.rds") #save it as new working model
     output$runmodel <- renderText({"Model Re-Optimized!"})
     }
   })
   
-  #add in a toggle to plot raw data/stuff 
+  #could add in a toggle to plot raw data/stuff 
 }

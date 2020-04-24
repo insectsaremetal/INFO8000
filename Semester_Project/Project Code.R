@@ -187,22 +187,191 @@ write.csv(Outbreakdata, "Outbreak_data.csv")
 ##########################
 # CREATING THE MODEL     #
 ##########################
+Outbreakdata <- read.csv("Outbreak_data.csv")
+Outbreakdata$RISK <- ifelse(Outbreakdata$Acres > 5, 1, 0)
+forests <- raster("SE_Forest.tif")
 
+temp.out <- Outbreakdata[,c("Longitude", "Latitude")]
+coordinates(temp.out) <- ~Longitude+Latitude
+proj4string(temp.out) <-CRS ("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0")
+pts <- spTransform(temp.out,CRS("+proj=utm +zone=17 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"))
+Outbreakdata$FOREST <- extract(forests, y = pts)
+
+
+  
 # Possible variables are:
 # Monthly minimum temps: Jan, Feb, Mar
 # Monthly maximum temps: Jan, Feb, Mar, Aug (prior year)
 # Prior year annual precipitation
+# Forest measures
 
-m_gam1  <- gam((Acres^(1/3)) ~ 
+# m_gam1  <- gam(Acres ~ 
+#                  s(AUGMAXTEMP) + 
+#                  s(Prcp) +
+#                  s(FEBMAXTEMP) + 
+#                  s(JANMAXTEMP,FEBMAXTEMP,MARMAXTEMP) +
+#                  s(Longitude, Latitude),
+#                family = gaussian(), 
+#                data = Outbreakdata,
+#                method = "REML")
+#deviance explained 3.64
+
+# m_gam1  <- gam(Acres ~ 
+#                  s(AUGMAXTEMP) + 
+#                  s(Prcp) +
+#                  s(Longitude, Latitude),
+#                family = gaussian(), 
+#                data = Outbreakdata,
+#                method = "REML")
+#deviance explained = 2.99
+
+# m_gam1  <- gam(Acres ~ 
+#                   s(AUGMAXTEMP) + 
+#                   s(Prcp) +
+#                  s(FEBMAXTEMP)+
+#                  s(JANMAXTEMP)+
+#                  s(MARMAXTEMP)+
+#                   s(Longitude, Latitude),
+#                 family = gaussian(), 
+#                 data = Outbreakdata,
+#                 method = "REML")
+# #deviance explained = 3.46
+# 
+# m_gam1  <- gam(Acres ~ 
+#                  s(AUGMAXTEMP) + 
+#                  s(Prcp) +
+#                  s(FEBMINTEMP)+
+#                  s(JANMINTEMP)+
+#                  s(MARMINTEMP)+
+#                  s(Longitude, Latitude),
+#                family = gaussian(), 
+#                data = Outbreakdata,
+#                method = "REML")
+#deviance explained = 3.59
+
+# m_gam1  <- gam(Acres ~ 
+#                  s(AUGMAXTEMP) + 
+#                  s(FEBMINTEMP)+
+#                  s(JANMINTEMP)+
+#                  s(MARMINTEMP)+
+#                  s(Longitude, Latitude),
+#                family = gaussian(), 
+#                data = Outbreakdata,
+#                method = "REML")
+#deviance explained = 3.65
+
+# m_gam1  <- gam(RISK ~ 
+#                  s(AUGMAXTEMP) + 
+#                  s(FEBMINTEMP)+
+#                  s(JANMINTEMP)+
+#                  s(MARMINTEMP)+
+#                  s(Longitude, Latitude),
+#                family = binomial(), 
+#                data = Outbreakdata,
+#                method = "REML")
+#deviance explained = 23.2%
+
+# m_gam1  <- gam(RISK ~ 
+#                  s(AUGMAXTEMP) + 
+#                  s(FEBMINTEMP,JANMINTEMP, MARMINTEMP)+
+#                  s(Longitude, Latitude) + 
+#                  s(Prcp),
+#                family = binomial(), 
+#                data = Outbreakdata,
+#                method = "REML")
+#deviance explained = 24.1
+
+# m_gam1  <- gam(RISK ~ 
+#                  s(AUGMAXTEMP) + 
+#                  s(FEBMINTEMP,JANMINTEMP, MARMINTEMP)+
+#                  s(FEBMAXTEMP,JANMAXTEMP, MARMAXTEMP)+
+#                  s(Longitude, Latitude) + 
+#                  s(Prcp),
+#                family = binomial(), 
+#                data = Outbreakdata,
+#                method = "REML")
+#Deviance explained = 25.9%
+
+# m_gam1  <- gam(RISK ~ 
+#                   s(AUGMAXTEMP) + 
+#                   s(FEBMINTEMP)+
+#                   s(JANMINTEMP)+
+#                   s(MARMINTEMP)+
+#                   s(Longitude, Latitude)+
+#                   Year,
+#                 family = binomial(), 
+#                 data = Outbreakdata,
+#                 method = "REML")
+#Deviance explained = 23.5%
+ 
+# m_gam1  <- gam(RISK ~ 
+#                   AUGMAXTEMP + 
+#                   FEBMINTEMP +
+#                   JANMINTEMP +
+#                   MARMINTEMP +
+#                   s(Longitude, Latitude)+
+#                   Year,
+#                 family = binomial(), 
+#                 data = Outbreakdata,
+#                 method = "REML")
+#Deviance explained = 19.5%
+summary(m_gam1)
+
+m_gam1  <- gam(RISK ~ 
+  s(AUGMAXTEMP) + 
+  s(FEBMAXTEMP,JANMAXTEMP, MARMAXTEMP)+
+  s(Longitude, Latitude) + 
+  s(Prcp) + s(FOREST),
+  family = binomial(), 
+  data = Outbreakdata,
+  method = "REML")
+summary(m_gam1)
+#21.4 % deviance explained
+
+temp.out <- test[,c("Longitude", "Latitude")]
+coordinates(temp.out) <- ~Longitude+Latitude
+proj4string(temp.out) <-CRS ("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0")
+pts <- spTransform(temp.out,CRS("+proj=utm +zone=17 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"))
+test$FOREST <- extract(forests, y = pts)
+
+
+
+m_gam1  <- gam(PRESENT ~ 
                  s(AUGMAXTEMP) + 
-                 s(Prcp) +
-                 s(FEBMAXTEMP) + 
-                 s(JANMAXTEMP,FEBMAXTEMP,MARMAXTEMP) +
-                 s(Longitude, Latitude),
-               family = gaussian(), 
-               data = Outbreakdata,
+                 s(FEBMAXTEMP,JANMAXTEMP, MARMAXTEMP)+
+                 s(Longitude, Latitude) + 
+                 s(Prcp),
+               family = binomial(), 
+               data = test,
                method = "REML")
-saveRDS(m_gam1, "insect_predict.rds")
+summary(m_gam1)
+#66.2% deviance explained 
+
+m_gam2  <- gam(PRESENT ~ 
+                 s(AUGMAXTEMP) + 
+                 s(FEBMAXTEMP,JANMAXTEMP, MARMAXTEMP)+
+                 s(FEBMINTEMP,JANMINTEMP, MARMINTEMP)+
+                 s(Longitude, Latitude) + 
+                 s(Prcp),
+               family = binomial(), 
+               data = test,
+               method = "REML")
+summary(m_gam2)
+#70.9% deviance explained
+
+m_gam3  <- gam(PRESENT ~ 
+                 s(AUGMAXTEMP) + 
+                 s(FEBMAXTEMP,JANMAXTEMP, MARMAXTEMP)+
+                 s(FEBMINTEMP,JANMINTEMP, MARMINTEMP)+
+                 s(Longitude, Latitude) + 
+                 s(FOREST)+
+                 s(Prcp),
+               family = binomial(), 
+               data = test,
+               method = "REML")
+summary(m_gam3)
+
+saveRDS(m_gam3, "insect_predict.rds")
 
 
 #summary(m_gam1)
@@ -211,7 +380,7 @@ saveRDS(m_gam1, "insect_predict.rds")
 
 
 ## Test prediction 
-Fakedata <- data.frame(Latitude = 32.95954, Longitude = -85.45714)
+Fakedata <- data.frame(Latitude = 32.95954, Longitude = -85.45714, Year = 2020)
 daymet <- download_daymet(site = "mysite",
                       lat = Fakedata$Latitude,
                       lon = Fakedata$Longitude,
@@ -224,5 +393,16 @@ Fakedata$FEBMAXTEMP <- mean(daymet$data$tmax..deg.c.[397:424]) #2019
 Fakedata$MARMAXTEMP <- mean(daymet$data$tmax..deg.c.[425:455]) #2019
 Fakedata$Prcp <- sum(daymet$data$prcp..mm.day.[365:730]) #2019
 Fakedata$AUGMAXTEMP <- mean(daymet$data$tmax..deg.c.[213:243]) #2018!!
+Fakedata$JANMINTEMP <- mean(daymet$data$tmin..deg.c.[366:396]) #2019
+Fakedata$FEBMINTEMP <- mean(daymet$data$tmin..deg.c.[397:424]) #2019
+Fakedata$MARMINTEMP <- mean(daymet$data$tmin..deg.c.[425:455]) #2019
 
-pred.acres <- predict(m_gam1,Fakedata,type="response")
+temp.out <- Fakedata[,c("Longitude", "Latitude")]
+coordinates(temp.out) <- ~Longitude+Latitude
+proj4string(temp.out) <-CRS ("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0")
+pts <- spTransform(temp.out,CRS("+proj=utm +zone=17 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"))
+Fakedata$FOREST <- extract(forests, y = pts)
+
+pred.outbreak <- predict(m_gam3,Fakedata,type="response")
+plot(test$Longitude, test$Latitude)
+points(temp.out, col = "red")

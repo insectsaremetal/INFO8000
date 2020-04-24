@@ -67,5 +67,5 @@ ui <<- fluidPage(
   column(width = 2,
          actionButton("optimize", "Re-Run Model")),
   tags$div(
-    tags$p("Rerunning the model will use the newly uploaded data to fit a new GAM. This may take a few moments")))
+    tags$p("Rerunning the model will use the newly uploaded data to fit a new GAM. This may take a few moments. The words Model Re-Optimized! will appear when complete")))
 )
