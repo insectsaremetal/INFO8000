@@ -197,8 +197,6 @@ proj4string(temp.out) <-CRS ("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +
 pts <- spTransform(temp.out,CRS("+proj=utm +zone=17 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"))
 Outbreakdata$FOREST <- extract(forests, y = pts)
 
-
-  
 # Possible variables are:
 # Monthly minimum temps: Jan, Feb, Mar
 # Monthly maximum temps: Jan, Feb, Mar, Aug (prior year)
@@ -328,11 +326,36 @@ m_gam1  <- gam(RISK ~
 summary(m_gam1)
 #21.4 % deviance explained
 
-temp.out <- test[,c("Longitude", "Latitude")]
+## Pseudo-absences
+newdat <- data.frame(Longitude = runif(30, min = -95, -78), Latitude = runif(30, min = 30, 38), Year = sample(2016:2018, 30, replace = T))
+
+for (i in 1: nrow(newdat)){
+  daymet <- download_daymet(site = "mysite",
+                            lat = newdat$Latitude[i],
+                            lon = newdat$Longitude[i],
+                            start = newdat$Year[i] - 1,
+                            end = newdat$Year[i],
+                            internal = TRUE,
+                            simplify = F) # returns tidy data! 
+  newdat$JANMAXTEMP[i] <- mean(daymet$data$tmax..deg.c.[366:396]) #my year
+  newdat$FEBMAXTEMP[i] <- mean(daymet$data$tmax..deg.c.[397:424]) #my year
+  newdat$MARMAXTEMP[i] <- mean(daymet$data$tmax..deg.c.[425:455]) #my year
+  newdat$Prcp[i] <- sum(daymet$data$prcp..mm.day.[365:730]) #my year 
+  newdat$AUGMAXTEMP[i] <- mean(daymet$data$tmax..deg.c.[213:243]) #year BEFORE
+  newdat$JANMINTEMP[i] <- mean(daymet$data$tmin..deg.c.[366:396]) 
+  newdat$FEBMINTEMP[i] <- mean(daymet$data$tmin..deg.c.[397:424]) 
+  newdat$MARMINTEMP[i] <- mean(daymet$data$tmin..deg.c.[425:455])
+  newdat$RISK[i] <- 0
+  newdat$Acres[i] <- 0
+  newdat$PRESENT[i] <- 0
+} 
+temp.out <- newdat[,c("Longitude", "Latitude")]
 coordinates(temp.out) <- ~Longitude+Latitude
 proj4string(temp.out) <-CRS ("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0")
 pts <- spTransform(temp.out,CRS("+proj=utm +zone=17 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"))
-test$FOREST <- extract(forests, y = pts)
+newdat$FOREST <- extract(forests, y = pts) 
+
+test <- merge(newdat, Outbreakdata, all = T)
 
 
 
