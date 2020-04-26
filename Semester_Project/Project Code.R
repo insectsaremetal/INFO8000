@@ -36,7 +36,28 @@ Outbreakdata <- read.csv(Outbreakdata)
 # Monthly maximum temps: Jan, Feb, Mar, Aug (prior year)
 # Prior year annual precipitation
 # Forest measures
+m_gam1  <- gam(PRESENT ~ 
+                 s(AUGMAXTEMP) + 
+                 s(FEBMAXTEMP,JANMAXTEMP, MARMAXTEMP)+
+                 s(FEBMINTEMP,JANMINTEMP, MARMINTEMP)+
+                 s(Longitude, Latitude) + 
+                 s(Prcp),
+               family = binomial(link = logit), 
+               data = Outbreakdata,
+               method = "REML")
+summary(m_gam1)
+#93.7
 
+m_gam2  <- gam(PRESENT ~ 
+                 s(AUGMAXTEMP) + 
+                 s(FEBMINTEMP,JANMINTEMP, MARMINTEMP)+
+                 s(Longitude, Latitude) + 
+                 s(Prcp),
+               family = binomial(link = logit), 
+               data = Outbreakdata,
+               method = "REML")
+summary(m_gam2)
+#84.5%
 
 m_gam3  <- gam(PRESENT ~ 
                  s(AUGMAXTEMP) + 
@@ -46,9 +67,10 @@ m_gam3  <- gam(PRESENT ~
                  s(FOREST)+
                  s(Prcp),
                family = binomial(link = logit), 
-               data = test,
+               data = Outbreakdata,
                method = "REML")
 summary(m_gam3)
+#94.2% 
 gam.check(m_gam3)
 
 saveRDS(m_gam3, "insect_predict.rds")
@@ -60,8 +82,8 @@ saveRDS(m_gam3, "insect_predict.rds")
 
 
 ## Test prediction 
-Fakedata <- data.frame(Latitude = 32.95954, 
-                       Longitude = -85.45714, 
+Fakedata <- data.frame(Latitude = 36.4, 
+                       Longitude = -85.6, 
                        Year = 2019)
 daymet <- download_daymet(site = "mysite",
                           lat = Fakedata$Latitude,
@@ -86,5 +108,7 @@ pts <- spTransform(temp.out,CRS("+proj=utm +zone=17 +ellps=GRS80 +datum=NAD83 +u
 Fakedata$FOREST <- extract(forests, y = pts)
 
 pred.outbreak <- predict(m_gam3,Fakedata,type="response", link = logit)
+plogis(pred.outbreak)
+
 plot(test$Longitude, test$Latitude)
 points(temp.out, col = "red")

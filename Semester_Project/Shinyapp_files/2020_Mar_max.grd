@@ -1,0 +1,26 @@
+[general]
+creator=R package 'raster'
+created=2020-04-25 20:01:16
+[georeference]
+nrows=621
+ncols=1405
+xmin=-125.020833333
+ymin=24.0625
+xmax=-66.479166666
+ymax=49.9375
+projection=+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0
+[data]
+datatype=FLT4S
+byteorder=little
+nbands=1
+bandorder=BIL
+categorical=FALSE
+minvalue=-6.88800001144409
+maxvalue=32.2169990539551
+nodatavalue=-3.4e+38
+[legend]
+legendtype=
+values=
+color=
+[description]
+layername=PRISM_tmax_provisional_4kmM3_202003_bil

@@ -15,6 +15,7 @@ library(maptools)
 
 #setwd(dirname(rstudioapi::getActiveDocumentContext()$path)) #set directory to file location
 m_gam1 <<- readRDS("insect_predict.rds")
+forests <<- raster("SE_Forest.tif")
 #Fakedata <<- data.frame(Longitude = -85.45714, Latitude = 32.95954) #until new values are put in
 
 ui <<- fluidPage(
@@ -37,9 +38,9 @@ ui <<- fluidPage(
   
   fluidRow(
     column(width = 2,
-           numericInput("lat", "Latitude (DD)", value = 31.95954, min = 25, max = 39, step = .20000), tags$div(tags$p("Please enter a latitude between 25 and 39"))),
-    column(width = 2,
            numericInput("lon", "Longitude (DD)", value = -85.45714, min = -95, max = -76, step = .20000), tags$div(tags$p("Please enter a longitude between -95 and -76"))),
+    column(width = 2,
+           numericInput("lat", "Latitude (DD)", value = 31.95954, min = 25, max = 39, step = .20000), tags$div(tags$p("Please enter a latitude between 25 and 39"))),
     column(width = 2,
            numericInput("predyear", "Year", value = 2020, min = 1990, max= 2020), tags$div(tags$p("Please enter a Year between 1990 and 2020"))),
     column(width = 2,
@@ -67,5 +68,11 @@ ui <<- fluidPage(
   column(width = 2,
          actionButton("optimize", "Re-Run Model")),
   tags$div(
-    tags$p("Rerunning the model will use the newly uploaded data to fit a new GAM. This may take a few moments. The words Model Re-Optimized! will appear when complete")))
+    tags$p("Rerunning the model will use the newly uploaded data to fit a new GAM. This may take a few moments. The words Model Re-Optimized! will appear when complete"))),
+  fluidRow(
+    column(radioButtons("params", 
+      "What part of the model do you want to see the fit for?", c("Forest Cover", "Latitude/Longitude", "Annual Precipitation", "Previous Year's August Max Temperature")), width = 3),
+    column(width = 3, textOutput("deviance")),
+    column(plotOutput("modfit"), width = 5))
+    
 )

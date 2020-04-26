@@ -50,7 +50,7 @@ if(input$predyear == 2020){
       coordinates(predme) <- ~Longitude+Latitude
       Jan <<- raster("2020_Jan_max.grd")
       Feb <<- raster("2020_Feb_max.grd")
-      March <<- raster("2020_March_max.grd")
+      March <<- raster("2020_Mar_max.grd")
       Jan.min <<- raster("2020_Jan_min.grd")
       Feb.min <<- raster("2020_Feb_min.grd")
       March.min <<- raster("2020_March_min.grd")
@@ -74,8 +74,8 @@ if(input$predyear == 2020){
     
     
     m_gam1 <<- readRDS("insect_predict.rds")
-    preds <- predict(m_gam1,Fakedata,type="response", se.fit = T)
-    output$predicted <- renderText({paste("For coordinates (", Fakedata$Longitude, ", ", Fakedata$Latitude, ")  the current model ", ifelse(round(preds$fit) >0, "predicts an outbreak in ", "does not predict an outbreak in "), Fakedata$Year, ". The current model is based off of data from ", min(Outbreakdata$Year), " to ", max(Outbreakdata$Year), sep = "") })
+    preds <- predict(m_gam1,Fakedata,type="response", se.fit = T, link = logit)
+    output$predicted <- renderText({paste("For coordinates (", Fakedata$Longitude, ", ", Fakedata$Latitude, ")  the current model predicts a ", round(plogis(preds$fit), digits = 2)*100, "%  likelihood of an outbreak in ", Fakedata$Year, ". The current model is based off of data from ", min(Outbreakdata$Year), " to ", max(Outbreakdata$Year), sep = "") })
     output$predictors <- renderText({paste("Predictions based on ",round(Fakedata$FOREST, digits = 2)*100, " percent forest cover at the chosen point, January max temp of", round(Fakedata$JANMAXTEMP, digits = 0), "\u00B0C, February max temp of", round(Fakedata$FEBMAXTEMP, digits = 0), "\u00B0C, March max temp of  ", round(Fakedata$MARMAXTEMP, digits = 0), "\u00B0C, August ", Fakedata$Year- 1, " max temperature of ", round(Fakedata$AUGMAXTEMP, digits = 0), "\u00B0C, and annual precipitation of", round(Fakedata$Prcp, digits =2), "mm.") })
   })
 
@@ -131,6 +131,12 @@ if(input$predyear == 2020){
     output$runmodel <- renderText({"Model Re-Optimized!"})
     }
   })
+  
+  output$modfit <- renderPlot({
+    param <- switch(input$params, "Forest Cover" = 5, "Latitude/Longitude" = 4, "Annual Precipitation" = 6, "Previous Year's August Max Temperature" = 1)
+    plot(m_gam1, select = param)})
+  
+  output$deviance <- renderText({paste("Deviance explained by current model: ", round(summary(m_gam1)$dev.expl*100, digits =2), "%")})
   
   #could add in a toggle to plot raw data/stuff 
 }
